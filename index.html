@@ -2,9 +2,7 @@
 <html>
   <head>
     <meta charset="UTF-8" />
-    <title>Lander on Marker</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    
+    <title>Chandrayan</title>
     <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.1.4/dist/mindar-image-aframe.prod.js"></script>
   </head>
@@ -18,21 +16,13 @@
       device-orientation-permission-ui="enabled: true"
     >
       <a-assets>
-        <a-asset-item id="landerModel" src="lander.glb"></a-asset-item>
+        <a-asset-item id="model" src="lander.glb"></a-asset-item>
       </a-assets>
 
       <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
 
       <a-entity mindar-image-target="targetIndex: 0">
-        <!-- Lander starts above and lands -->
-        <a-gltf-model
-          id="lander"
-          src="#landerModel"
-          position="0 1 0"
-          scale="0.5 0.5 0.5"
-          animation="property: position; to: 0 0 0; dur: 2000; easing: easeOutQuad"
-          animation-mixer
-        ></a-gltf-model>
+        <a-gltf-model src="#model" position="0 0 0" scale="0.5 0.5 0.5"></a-gltf-model>
       </a-entity>
     </a-scene>
   </body>
