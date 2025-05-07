@@ -46,7 +46,7 @@
       AFRAME.registerComponent("lander-controller", {
         init: function () {
           const el = this.el;
-          el.object3D.position.set(0, 0, 1); // Start at offset
+          el.object3D.position.set(0, 1, 0); // Start at offset
           el.setAttribute("visible", false);
 
           this.el.sceneEl.addEventListener("targetFound", () => {
@@ -54,9 +54,9 @@
 
             el.setAttribute("animation__landing", {
               property: "position",
-              from: "0 0 1",
+              from: "0 1 0",
               to: "0 0 0",
-              dur: 1000,
+              dur: 2000,
               easing: "easeOutElastic"
             });
 
