@@ -1,39 +1,79 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>Chandrayan</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/aframe@1.5.0/dist/aframe.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.2/dist/mindar-image-aframe.prod.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.150.0/build/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/aframe-extras@6.1.1/dist/aframe-extras.min.js"></script>
   </head>
   <body>
-    <a-scene 
-      mindar-image="imageTargetSrc: ./Target.mind" 
-      color-space="sRGB" 
-      renderer="colorManagement: true, physicallyCorrectLights: false" 
-      vr-mode-ui="enabled: false" 
-      device-orientation-permission-ui="enabled: true">
-      
-      <a-entity light="type: directional; color: #fff; intensity: 1" position="-1 1 0"></a-entity>
-      
+    <script>
+      AFRAME.registerComponent('landing-animation', {
+        schema: {},
+        init: function () {
+          this.el.setAttribute('visible', false);
+          this.hasLanded = false;
+          this.startLanding = this.startLanding.bind(this);
+
+          this.el.sceneEl.addEventListener('targetFound', this.startLanding);
+        },
+        startLanding: function () {
+          if (this.hasLanded) return;
+
+          this.el.setAttribute('visible', true);
+          this.el.setAttribute('position', { x: 1, y: 0, z: 0 });
+
+          // Animate position to (0, 0, 0)
+          this.el.removeAttribute('animation__position'); // prevent conflicts
+          this.el.setAttribute('animation__position', {
+            property: 'position',
+            to: '0 0 0',
+            dur: 2000,
+            easing: 'easeOutElastic',
+          });
+
+          setTimeout(() => {
+            // Play the model animation after landing
+            const model = this.el.getObject3D('mesh');
+            if (model && model.animations && model.animations.length) {
+              const mixer = new THREE.AnimationMixer(model);
+              const action = mixer.clipAction(model.animations[0]);
+              action.play();
+
+              this.mixer = mixer;
+            }
+            this.hasLanded = true;
+          }, 2100);
+        },
+        tick: function (time, deltaTime) {
+          if (this.mixer) this.mixer.update(deltaTime / 1000);
+        },
+      });
+    </script>
+
+    <a-scene mindar-image="imageTargetSrc: ./targets.mind; autoStart: true;" 
+             embedded 
+             color-space="sRGB" 
+             renderer="colorManagement: true, physicallyCorrectLights"
+             vr-mode-ui="enabled: false" 
+             device-orientation-permission-ui="enabled: true">
+
       <a-assets>
-        <a-asset-item id="model" src="./Lander.glb"></a-asset-item>
+        <!-- Replace with your GLB model path -->
+        <a-asset-item id="landerModel" src="./lander.glb"></a-asset-item>
       </a-assets>
 
       <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
 
       <a-entity mindar-image-target="targetIndex: 0">
-        <!-- Animation wrapper -->
-        <a-entity id="lander-wrapper" position="0 0 0"
-                  animation="property: scale; to: 0.04 0 0; dur: 200000">
-          <a-gltf-model 
-            src="#model" 
-            scale="0.05 0.05 0.05" 
-            rotation="90 0 0">
-          </a-gltf-model>
-        </a-entity>
+        <a-gltf-model 
+          id="lander"
+          landing-animation
+          src="#landerModel" 
+          rotation="0 0 0"
+          scale="0.5 0.5 0.5">
+        </a-gltf-model>
       </a-entity>
-
     </a-scene>
   </body>
 </html>
