@@ -23,7 +23,8 @@
         <a-entity 
           id="lander"
           gltf-model="#landerModel"
-          scale="0.1 0.1 0.1"
+          scale="0.05 0.05 0.05"
+          rotation = "90 0 0"
           animation-mixer
           lander-controller>
         </a-entity>
@@ -45,7 +46,7 @@
       AFRAME.registerComponent("lander-controller", {
         init: function () {
           const el = this.el;
-          el.object3D.position.set(1, 0, 0); // Start at offset
+          el.object3D.position.set(0, 0, 1); // Start at offset
           el.setAttribute("visible", false);
 
           this.el.sceneEl.addEventListener("targetFound", () => {
@@ -53,7 +54,7 @@
 
             el.setAttribute("animation__landing", {
               property: "position",
-              from: "1 0 0",
+              from: "0 0 1",
               to: "0 0 0",
               dur: 1000,
               easing: "easeOutElastic"
