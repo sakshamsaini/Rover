@@ -1,79 +1,85 @@
 <!DOCTYPE html>
 <html>
   <head>
-     <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.150.0/build/three.min.js"></script>
+    <title>MindAR Lander Animation</title>
+    <meta charset="utf-8" />
+    <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/aframe-extras@6.1.1/dist/aframe-extras.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.1.7/dist/mindar-image-aframe.prod.js"></script>
+    <style>
+      body { margin: 0; overflow: hidden; }
+      #loading { position: absolute; width: 100%; height: 100%; background: black; color: white; display: flex; align-items: center; justify-content: center; }
+    </style>
   </head>
   <body>
-    <script>
-      AFRAME.registerComponent('landing-animation', {
-        schema: {},
-        init: function () {
-          this.el.setAttribute('visible', false);
-          this.hasLanded = false;
-          this.startLanding = this.startLanding.bind(this);
-
-          this.el.sceneEl.addEventListener('targetFound', this.startLanding);
-        },
-        startLanding: function () {
-          if (this.hasLanded) return;
-
-          this.el.setAttribute('visible', true);
-          this.el.setAttribute('position', { x: 1, y: 0, z: 0 });
-
-          // Animate position to (0, 0, 0)
-          this.el.removeAttribute('animation__position'); // prevent conflicts
-          this.el.setAttribute('animation__position', {
-            property: 'position',
-            to: '0 0 0',
-            dur: 2000,
-            easing: 'easeOutElastic',
-          });
-
-          setTimeout(() => {
-            // Play the model animation after landing
-            const model = this.el.getObject3D('mesh');
-            if (model && model.animations && model.animations.length) {
-              const mixer = new THREE.AnimationMixer(model);
-              const action = mixer.clipAction(model.animations[0]);
-              action.play();
-
-              this.mixer = mixer;
-            }
-            this.hasLanded = true;
-          }, 2100);
-        },
-        tick: function (time, deltaTime) {
-          if (this.mixer) this.mixer.update(deltaTime / 1000);
-        },
-      });
-    </script>
-
-    <a-scene mindar-image="imageTargetSrc: ./targets.mind; autoStart: true;" 
-             embedded 
-             color-space="sRGB" 
-             renderer="colorManagement: true, physicallyCorrectLights"
-             vr-mode-ui="enabled: false" 
-             device-orientation-permission-ui="enabled: true">
-
-      <a-assets>
-        <!-- Replace with your GLB model path -->
-        <a-asset-item id="landerModel" src="./lander.glb"></a-asset-item>
-      </a-assets>
-
+    <div id="loading">Loading AR...</div>
+    
+    <a-scene
+      mindar-image="imageTargetSrc: ./targets.mind; autoStart: true; uiScanning: false; uiLoading: false"
+      vr-mode-ui="enabled: false"
+      device-orientation-permission-ui="enabled: true"
+      embedded
+      renderer="colorManagement: true; physicallyCorrectLights"
+    >
+      <!-- Camera -->
       <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
 
+      <!-- Target -->
       <a-entity mindar-image-target="targetIndex: 0">
-        <a-gltf-model 
+        <!-- Lander model -->
+        <a-entity 
           id="lander"
-          landing-animation
-          src="#landerModel" 
-          rotation="0 0 0"
-          scale="0.5 0.5 0.5">
-        </a-gltf-model>
+          gltf-model="#landerModel"
+          scale="0.1 0.1 0.1"
+          animation-mixer
+          lander-controller>
+        </a-entity>
       </a-entity>
+
+      <!-- Assets -->
+      <a-assets>
+        <!-- Replace with your actual model -->
+        <a-asset-item id="landerModel" src="./models/lander.glb"></a-asset-item>
+      </a-assets>
     </a-scene>
+
+    <script>
+      // Hide loading screen when scene is loaded
+      document.querySelector("a-scene").addEventListener("loaded", () => {
+        document.getElementById("loading").style.display = "none";
+      });
+
+      AFRAME.registerComponent("lander-controller", {
+        init: function () {
+          const el = this.el;
+          el.object3D.position.set(1, 0, 0); // Start at offset
+          el.setAttribute("visible", false);
+
+          this.el.sceneEl.addEventListener("targetFound", () => {
+            el.setAttribute("visible", true);
+
+            el.setAttribute("animation__landing", {
+              property: "position",
+              from: "1 0 0",
+              to: "0 0 0",
+              dur: 1000,
+              easing: "easeOutElastic"
+            });
+
+            // Play glTF animation after landing
+            setTimeout(() => {
+              if (el.components["animation-mixer"]) {
+                el.components["animation-mixer"].play();
+              }
+            }, 1100);
+          });
+
+          this.el.sceneEl.addEventListener("targetLost", () => {
+            el.setAttribute("visible", false);
+            el.components["animation-mixer"]?.stopAction();
+          });
+        }
+      });
+    </script>
   </body>
 </html>
